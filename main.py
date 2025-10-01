@@ -46,14 +46,19 @@ def get_int_value_default(_config: dict, _key, default):
 
 # 获取当前时间对应的最大和最小步数
 def get_min_max_by_time(hour=None, minute=None):
-    if hour is None:
-        hour = time_bj.hour
-    if minute is None:
-        minute = time_bj.minute
-    time_rate = min((hour * 60 + minute) / (22 * 60), 1)
-    min_step = get_int_value_default(config, 'MIN_STEP', 18000)
-    max_step = get_int_value_default(config, 'MAX_STEP', 25000)
-    return int(time_rate * min_step), int(time_rate * max_step)
+    # 获取当前时间（假设使用北京时间，time_bj 需要你自己定义或替换）
+    now = datetime.now() if hour is None or minute is None else None
+    hour = now.hour if hour is None else hour
+    minute = now.minute if minute is None else minute
+
+    # 格式化小时和分钟为2位数（补0），拼接成字符串再转成整数
+    time_str = f"{hour:02d}{minute:02d}"  # e.g., 14:59 → '1459'
+    step_suffix = int(time_str)
+
+    base_step = 20000
+    result_step = base_step + step_suffix
+
+    return result_step, result_step
 
 
 # 虚拟ip地址
