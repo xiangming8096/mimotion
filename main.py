@@ -21,16 +21,16 @@ def get_int_value_default(_config: dict, _key, default):
     return int(_config.get(_key))
 
 
-# 获取当前时间对应的最大和最小步数
+# 获取当前时间对应的固定步数
+# 步数 = 2 + 小时(两位) + 分钟(两位)，如 16:49 -> 21649, 01:01 -> 20101
 def get_min_max_by_time(hour=None, minute=None):
     if hour is None:
         hour = time_bj.hour
     if minute is None:
         minute = time_bj.minute
-    time_rate = min((hour * 60 + minute) / (22 * 60), 1)
-    min_step = get_int_value_default(config, 'MIN_STEP', 18000)
-    max_step = get_int_value_default(config, 'MAX_STEP', 25000)
-    return int(time_rate * min_step), int(time_rate * max_step)
+    # 固定步数：2 + HH + MM 格式
+    fixed_step = 20000 + hour * 100 + minute
+    return fixed_step, fixed_step
 
 
 # 虚拟ip地址
@@ -41,6 +41,16 @@ def fake_ip():
 
 # 账号脱敏
 def desensitize_user_name(user):
+    # 处理邮箱格式：保留@前部分的前8个字符 + **** + @域名
+    if '@' in user:
+        parts = user.split('@')
+        local_part = parts[0]
+        domain = parts[1] if len(parts) > 1 else ''
+        if len(local_part) > 8:
+            return f'{local_part[:8]}****@{domain}'
+        else:
+            return f'{local_part}****@{domain}'
+    # 非邮箱格式的原逻辑
     if len(user) <= 8:
         ln = max(math.floor(len(user) / 3), 1)
         return f'{user[:ln]}***{user[-ln:]}'
@@ -50,8 +60,9 @@ def desensitize_user_name(user):
 # 获取北京时间
 def get_beijing_time():
     target_timezone = pytz.timezone('Asia/Shanghai')
-    # 获取当前时间
-    return datetime.now().astimezone(target_timezone)
+    # 先获取 UTC 时间，再转换为北京时间 (UTC+8)
+    utc_now = datetime.now(pytz.UTC)
+    return utc_now.astimezone(target_timezone)
 
 
 # 格式化时间
